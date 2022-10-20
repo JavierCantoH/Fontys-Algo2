@@ -3,22 +3,8 @@ from traceback import print_tb
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 import networkx as nx
-import random
-from itertools import combinations, groupby
-
-def connectSubgraphs(graph):
-    components = dict(enumerate(nx.connected_components(graph)))
-    components_combs = combinations(components.keys(), r=2)
-
-    for _, node_edges in groupby(components_combs, key=lambda x: x[0]):
-        node_edges = list(node_edges)
-        random_comps = random.choice(node_edges)
-        source = random.choice(list(components[random_comps[0]]))
-        target = random.choice(list(components[random_comps[1]]))
-        graph.add_edge(source, target)
-    plt.figure(figsize=(12,6))
-    nx.draw(graph, node_size=100, node_color='lightgreen')
-    plt.show()
+#import random
+#from itertools import combinations, groupby
 
 def generateGraph(numberOfNodes, probability, comesFromConnectSubgraphs):
     print(probability)
@@ -29,12 +15,8 @@ def generateGraph(numberOfNodes, probability, comesFromConnectSubgraphs):
     seed = 20160 # seed random number generators for reproducibility
 
     G = nx.gnm_random_graph(n, e, seed = seed) 
-    if comesFromConnectSubgraphs:
-        return G
-    else:
-        nx.draw(G, node_size= 100, node_color='lightblue')
-        plt.show()
-
+    nx.draw(G, node_size= 100, node_color='lightblue')
+    plt.show()
 
 layout = [
         [sg.Text("Enter the number of nodes:")],    
@@ -61,6 +43,6 @@ while True:
     elif event == "Make it a connected graph":
         numberOfNodes = values['-nodes-']
         probability = values['-probability-']
-        connectSubgraphs(generateGraph(numberOfNodes, probability, True))
+        #connectSubgraphs(generateGraph(numberOfNodes, probability, True))
 
 window.close()

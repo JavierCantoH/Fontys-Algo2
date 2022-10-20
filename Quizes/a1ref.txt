@@ -4,3 +4,17 @@
 # https://pypi.org/project/PySimpleGUI/
 # https://blog.finxter.com/sample-a-random-number-from-a-probability-distribution-in-python/
 # https://stackoverflow.com/questions/62893202/fully-connect-an-unconnected-graph-in-networkx
+
+def connectSubgraphs(graph):
+    components = dict(enumerate(nx.connected_components(graph)))
+    components_combs = combinations(components.keys(), r=2)
+
+    for _, node_edges in groupby(components_combs, key=lambda x: x[0]):
+        node_edges = list(node_edges)
+        random_comps = random.choice(node_edges)
+        source = random.choice(list(components[random_comps[0]]))
+        target = random.choice(list(components[random_comps[1]]))
+        graph.add_edge(source, target)
+    plt.figure(figsize=(12,6))
+    nx.draw(graph, node_size=100, node_color='lightgreen')
+    plt.show()
