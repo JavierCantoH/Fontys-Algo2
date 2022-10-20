@@ -1,19 +1,11 @@
-# REFERENCES
-# https://networkx.org/documentation/stable/auto_examples/graph/plot_erdos_renyi.html
-# https://networkx.org/documentation/stable/reference/randomness.html
-# https://pypi.org/project/PySimpleGUI/
-# https://blog.finxter.com/sample-a-random-number-from-a-probability-distribution-in-python/
-# https://stackoverflow.com/questions/62893202/fully-connect-an-unconnected-graph-in-networkx
-
 from os import PRIO_PGRP
-import time
+from traceback import print_tb
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
 from itertools import combinations, groupby
 
-# TODO: find two disconnected subgraphs, select an arbitrary vertex in each of them and add an edge between those two vertices.
 def connectSubgraphs(graph):
     components = dict(enumerate(nx.connected_components(graph)))
     components_combs = combinations(components.keys(), r=2)
@@ -28,14 +20,15 @@ def connectSubgraphs(graph):
     nx.draw(graph, node_size=100, node_color='lightgreen')
     plt.show()
 
-# TODO: use the probability for the number of edges
 def generateGraph(numberOfNodes, probability, comesFromConnectSubgraphs):
     print(probability)
     n = int(numberOfNodes) # nodes
     e = ((int(probability) * (n-1)) / 100) * (n-1) # edges
+    print("Number of edges = ")
+    print(e)
     seed = 20160 # seed random number generators for reproducibility
 
-    G = nx.gnm_random_graph(n, e, seed=seed) 
+    G = nx.gnm_random_graph(n, e, seed = seed) 
     if comesFromConnectSubgraphs:
         return G
     else:
@@ -60,19 +53,14 @@ while True:
         break
 
     elif event == "Generate Graph":
-        window["Generate Graph"].update(disabled=True)
         numberOfNodes = values['-nodes-']
         probability = values['-probability-']
         generateGraph(numberOfNodes, probability, False)
-        time.sleep(1)
-        window["Generate Graph"].update(disabled=False)
     
+    # TODO: make this work without closing the window
     elif event == "Make it a connected graph":
-        window["Make it a connected graph"].update(disabled=True)
         numberOfNodes = values['-nodes-']
         probability = values['-probability-']
         connectSubgraphs(generateGraph(numberOfNodes, probability, True))
-        time.sleep(1)
-        window["Make it a connected graph"].update(disabled=False)
 
 window.close()

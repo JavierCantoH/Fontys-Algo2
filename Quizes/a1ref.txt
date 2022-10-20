@@ -1,0 +1,6 @@
+# REFERENCES
+# https://networkx.org/documentation/stable/auto_examples/graph/plot_erdos_renyi.html
+# https://networkx.org/documentation/stable/reference/randomness.html
+# https://pypi.org/project/PySimpleGUI/
+# https://blog.finxter.com/sample-a-random-number-from-a-probability-distribution-in-python/
+# https://stackoverflow.com/questions/62893202/fully-connect-an-unconnected-graph-in-networkx
