@@ -17,9 +17,17 @@ class Graph(object):
         self.adjMatrix[v1][v2] = 1
         self.adjMatrix[v2][v1] = 1
     
+    # TODO: MAKE IT WORK
+    def connectGraph(self):
+        for row in self.adjMatrix:
+            for val in row:
+                if val == 0:
+                    val = 1
+    
     def draw_graph(self):
         A = np.array(self.adjMatrix)
         G = nx.from_numpy_matrix(A)
+        print(np.matrix(A))
         nx.draw(G, node_color='lightblue')
         plt.show()
 
@@ -43,6 +51,7 @@ while True:
         numberOfNodes = values['-nodes-']
         probability = values['-probability-']
         g = Graph(int(numberOfNodes))
+        # TODO: generate random edges with the probability
         g.add_edge(0, 1)
         g.add_edge(0, 2)
         g.add_edge(1, 2)
@@ -50,8 +59,17 @@ while True:
         g.add_edge(2, 3)
         g.draw_graph()
     
-    # TODO:
     elif event == "Make it a connected graph":
-       print("todo")
+        numberOfNodes = values['-nodes-']
+        probability = values['-probability-']
+        g = Graph(int(numberOfNodes))
+        # TODO: generate random edges with the probability
+        g.add_edge(0, 1)
+        g.add_edge(0, 2)
+        g.add_edge(1, 2)
+        g.add_edge(2, 0)
+        g.add_edge(2, 3)
+        g.connectGraph()
+        g.draw_graph()
 
 window.close()
