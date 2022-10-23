@@ -4,6 +4,9 @@
 # https://pypi.org/project/PySimpleGUI/
 # https://blog.finxter.com/sample-a-random-number-from-a-probability-distribution-in-python/
 # https://stackoverflow.com/questions/62893202/fully-connect-an-unconnected-graph-in-networkx
+# https://www.codingninjas.com/codestudio/problems/vertex-cover-problem_1081481?leftPanelTab=2
+#https://www.techiedelight.com/check-given-graph-strongly-connected-not/
+# https://www.sanfoundry.com/cpp-program-check-vertex-cover-size-k-exists/
 
 def connectSubgraphs(graph):
     components = dict(enumerate(nx.connected_components(graph)))
