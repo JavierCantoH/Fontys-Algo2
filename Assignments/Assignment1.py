@@ -4,95 +4,90 @@ import networkx as nx
 import numpy as np
 import random
 
-def getProbability(probability):
-    p = float(probability / 100)
-    return random.random() < p
-
 class Graph(object):
-
     def __init__(self, vertices):
         self.adjMatrix = []
         for i in range(vertices):
             self.adjMatrix.append([0 for i in range(vertices)])
         self.vertices = vertices
 
-    def add_edge(self, v1, v2):
+    def addSingleEdge(self, v1, v2):
         if v1 == v2:
             print("Same vertex %d and %d" % (v1, v2))
-        self.adjMatrix[v1][v2] = 1
-        self.adjMatrix[v2][v1] = 1
+        else:
+            self.adjMatrix[v1][v2] = 1
+            self.adjMatrix[v2][v1] = 1
     
-    def draw_graph(self):
+    def addEdges(self, probability):
+        for node in range(self.vertices):
+                if probability == 100:
+                    for otherNode in range(self.vertices):
+                        self.addSingleEdge(node, otherNode)
+                elif getProbability(probability) == True:
+                    randomNode = random.choice(range(self.vertices))
+                    self.addSingleEdge(node, randomNode)
+    
+    def drawGraph(self):
         A = np.array(self.adjMatrix)
         G = nx.from_numpy_matrix(A)
         print(np.matrix(A))
         nx.draw(G, node_color='lightblue')
         plt.show()
 
-    # TODO: finish and change this func or find a better solution
+    # TODO week 2: finish and change this func or find a better solution
     def printVertexCover(self):
-        
         # Initialize all vertices as not visited.
         visited = [False] * (self.vertices)
-        
         # Consider all edges one by one
         for u in range(self.vertices):
-            
-            # An edge is only picked when
-            # both visited[u] and visited[v]
-            # are false
+            # An edge is only picked when both visited[u] and visited[v] are false
             if not visited[u]:
-                
-                # Go through all adjacents of u and
-                # pick the first not yet visited
-                # vertex (We are basically picking
-                # an edge (u, v) from remaining edges.
+                # Go through all adjacents of u and pick the first not yet visited vertex (We are basically picking an edge (u, v) from remaining edges.
                 for v in self.adjMatrix[u]:
                     if not visited[v]:
-                        
-                        # Add the vertices (u, v) to the
-                        # result set. We make the vertex
-                        # u and v visited so that all
-                        # edges from/to them would
-                        # be ignored
+                        # Add the vertices (u, v) to the result set. We make the vertex u and v visited so that all edges from/to them would be ignored
                         visited[v] = True
                         visited[u] = True
                         break
-
         # Print the vertex cover
         for j in range(self.vertices):
             if visited[j]:
-                print(j, end = ' ')
-                
+                print(j, end = ' ')           
         print()
 
-# Function to perform DFS traversal on the graph on a graph
-def DFS(graph, v, visited):
- 
+def getProbability(probability):
+        p = float(probability / 100)
+        return random.random() < p
+
+# TODO week 1 DFS option 2
+def DFS2(graph, start, visited):
+    # Set current node as visited
+    visited[start] = True
+    # For every node of the graph
+    for node in range(graph.vertices):
+        # If some node is adjacent to the current node and it has not already been visited
+        if (graph.adjMatrix[start][node] == 1 and (not visited[node])):
+            DFS2(graph, node, visited)
+
+# TODO week 1: fix DFS
+def DFS(graph, start, visited):
     # mark current node as visited
-    visited[v] = True
- 
+    visited[start] = True
     # do for every edge (v, u)
-    for u in graph.adjMatrix[v]:
+    for node in graph.adjMatrix[start]:
         # `u` is not visited
-        if not visited[u]:
-            DFS(graph, u, visited)
- 
- 
-# Check if the graph is strongly connected or not
-def isStronglyConnected(graph):
- 
+        if not visited[node]:
+            DFS(graph, node, visited)
+
+# TODO week 1: FIX Check if the graph is connected or not
+def isGraphConnected(graph):
     # do for every vertex
     for i in range(graph.vertices):
- 
         # to keep track of whether a vertex is visited or not
         visited = [False] * graph.vertices
- 
         # start DFS from the first vertex
         DFS(graph, i, visited)
- 
-        # If DFS traversal doesn't visit all vertices,
-        # then the graph is not strongly connected
+        # If DFS traversal doesn't visit all vertices, then the graph is not strongly connected
         for b in visited:
             if not b:
                 return False
@@ -112,66 +107,27 @@ layout = [
 
 window = sg.Window("Algorithms Assignmet 1", layout)
 
+numberOfNodes: int
+probability: int
+g: Graph
+
+#TODO fix closing window PySimpleGUI
 while True:
     event, values = window.read(timeout=10)
     if event == sg.WIN_CLOSED:
         break
-
     elif event == "Generate Graph":
         numberOfNodes = int(values['-nodes-'])
         probability = int(values['-probability-'])
         g = Graph(numberOfNodes)
-        print("GRAPH")
-        print(g.adjMatrix)
-        for list in g.adjMatrix:
-            print("CURRENT list")
-            print(list)
-            for node in list:
-                print("CURRENT node")
-                print(node)
-                if getProbability(probability) == True:
-                    randomNode = random.choice(range(numberOfNodes))
-                    print("RANDOM NODE")
-                    print(randomNode)
-                    g.add_edge(node, randomNode)
-        
-
-        # TODO: generate random edges with the probability
-        #g.add_edge(0, 1)
-        #g.add_edge(0, 2)
-        #g.add_edge(1, 2)
-        #g.add_edge(2, 0)
-        #g.add_edge(2, 3)
-        g.draw_graph()
-    
+        g.addEdges(probability)
+        #g.drawGraph()
     elif event == "Make it a connected graph":
-        numberOfNodes = values['-nodes-']
-        probability = values['-probability-']
-        vertices = int(numberOfNodes)
-        g = Graph(vertices)
-        # TODO: generate random edges with the probability
-        g.add_edge(0, 1)
-        g.add_edge(0, 2)
-        g.add_edge(1, 2)
-        g.add_edge(2, 0)
-        g.add_edge(2, 3)
-        # TODO: MAKE IT WORK
-        print(isStronglyConnected(g))
-        g.draw_graph()
-    
+        #TODO
+        print(isGraphConnected(g))
+        #g.drawGraph()
     elif event == "Brute Vertex Cover":
-        numberOfNodes = values['-nodes-']
-        probability = values['-probability-']
-        numberVertexCover = values['-vertexcover-']
-        g = Graph(int(numberOfNodes))
-        # TODO: generate random edges with the probability
-        g.add_edge(0, 1)
-        g.add_edge(0, 2)
-        g.add_edge(0, 3)
-        g.add_edge(1, 2)
-        g.add_edge(1, 3)
-        g.add_edge(2, 3)
+        #TODO
         g.printVertexCover()
-        g.draw_graph()
-
+        #g.drawGraph()
 window.close()
