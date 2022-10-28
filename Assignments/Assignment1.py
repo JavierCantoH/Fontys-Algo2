@@ -2,6 +2,11 @@ import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import random
+
+def getProbability(probability):
+    p = float(probability / 100)
+    return random.random() < p
 
 class Graph(object):
 
@@ -113,15 +118,30 @@ while True:
         break
 
     elif event == "Generate Graph":
-        numberOfNodes = values['-nodes-']
-        probability = values['-probability-']
-        g = Graph(int(numberOfNodes))
+        numberOfNodes = int(values['-nodes-'])
+        probability = int(values['-probability-'])
+        g = Graph(numberOfNodes)
+        print("GRAPH")
+        print(g.adjMatrix)
+        for list in g.adjMatrix:
+            print("CURRENT list")
+            print(list)
+            for node in list:
+                print("CURRENT node")
+                print(node)
+                if getProbability(probability) == True:
+                    randomNode = random.choice(range(numberOfNodes))
+                    print("RANDOM NODE")
+                    print(randomNode)
+                    g.add_edge(node, randomNode)
+        
+
         # TODO: generate random edges with the probability
-        g.add_edge(0, 1)
-        g.add_edge(0, 2)
-        g.add_edge(1, 2)
-        g.add_edge(2, 0)
-        g.add_edge(2, 3)
+        #g.add_edge(0, 1)
+        #g.add_edge(0, 2)
+        #g.add_edge(1, 2)
+        #g.add_edge(2, 0)
+        #g.add_edge(2, 3)
         g.draw_graph()
     
     elif event == "Make it a connected graph":

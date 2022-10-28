@@ -7,17 +7,3 @@
 # https://www.codingninjas.com/codestudio/problems/vertex-cover-problem_1081481?leftPanelTab=2
 #https://www.techiedelight.com/check-given-graph-strongly-connected-not/
 # https://www.sanfoundry.com/cpp-program-check-vertex-cover-size-k-exists/
-
-def connectSubgraphs(graph):
-    components = dict(enumerate(nx.connected_components(graph)))
-    components_combs = combinations(components.keys(), r=2)
-
-    for _, node_edges in groupby(components_combs, key=lambda x: x[0]):
-        node_edges = list(node_edges)
-        random_comps = random.choice(node_edges)
-        source = random.choice(list(components[random_comps[0]]))
-        target = random.choice(list(components[random_comps[1]]))
-        graph.add_edge(source, target)
-    plt.figure(figsize=(12,6))
-    nx.draw(graph, node_size=100, node_color='lightgreen')
-    plt.show()
