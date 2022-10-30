@@ -30,70 +30,75 @@ class Graph(object):
     def drawGraph(self):
         A = np.array(self.adjMatrix)
         G = nx.from_numpy_matrix(A)
-        print(np.matrix(A))
         nx.draw(G, node_color='lightblue')
-        plt.show()
+        plt.show(block = False)
+    
+    def printAdjMatrix(self):
+        A = np.array(self.adjMatrix)
+        print(np.matrix(A))
+    
+def isNodeVertexCoverTrue(graph, start, num):
+        count = 0
+        visited = [False] * graph.vertices
+        DFS(graph, start, visited)
+        for nodeIndex, nodeValue in enumerate(visited):
+            if (nodeValue == True):
+                if nodeIndex == start:
+                    print("same node")
+                else:
+                    count = count + 1
+        if (num <= count):
+            return True
+        else:
+            return False
 
-    # TODO week 2: finish and change this func or find a better solution
-    def printVertexCover(self):
-        # Initialize all vertices as not visited.
-        visited = [False] * (self.vertices)
-        # Consider all edges one by one
-        for u in range(self.vertices):
-            # An edge is only picked when both visited[u] and visited[v] are false
-            if not visited[u]:
-                # Go through all adjacents of u and pick the first not yet visited vertex (We are basically picking an edge (u, v) from remaining edges.
-                for v in self.adjMatrix[u]:
-                    if not visited[v]:
-                        # Add the vertices (u, v) to the result set. We make the vertex u and v visited so that all edges from/to them would be ignored
-                        visited[v] = True
-                        visited[u] = True
-                        break
-        # Print the vertex cover
-        for j in range(self.vertices):
-            if visited[j]:
-                print(j, end = ' ')           
-        print()
+def printVertexCover(graph, num):
+    for node in range(graph.vertices):
+        currentNode = isNodeVertexCoverTrue(graph, node, num)
+        if currentNode == True:
+            return ("Graph has at least one vertex cover of size: " + str(num))
+        else:
+            print("The current node doesn't have vertex cover")
+    return ("Graph doesn't have vertex cover of size: " + str(num))
+
 
 def getProbability(probability):
         p = float(probability / 100)
         return random.random() < p
 
-# TODO week 1 DFS option 2
-def DFS2(graph, start, visited):
+def DFS(graph, start, visited):
     # Set current node as visited
     visited[start] = True
     # For every node of the graph
     for node in range(graph.vertices):
         # If some node is adjacent to the current node and it has not already been visited
         if (graph.adjMatrix[start][node] == 1 and (not visited[node])):
-            DFS2(graph, node, visited)
-
-# TODO week 1: fix DFS
-def DFS(graph, start, visited):
-    # mark current node as visited
-    visited[start] = True
-    # do for every edge (v, u)
-    for node in graph.adjMatrix[start]:
-        # `u` is not visited
-        if not visited[node]:
             DFS(graph, node, visited)
 
-# TODO week 1: FIX Check if the graph is connected or not
-def isGraphConnected(graph):
-    # do for every vertex
-    for i in range(graph.vertices):
-        # to keep track of whether a vertex is visited or not
-        visited = [False] * graph.vertices
-        # start DFS from the first vertex
-        DFS(graph, i, visited)
-        # If DFS traversal doesn't visit all vertices, then the graph is not strongly connected
-        for b in visited:
-            if not b:
-                return False
-    return True
+def isGraphConnected(graph, start):
+    count = 0
+    visited = [False] * graph.vertices
+    DFS(graph, start, visited)
+    for b in visited:
+        if (b == True):
+            count = count + 1
+    if (graph.vertices == count):
+        return True
+    else:
+        return False
+
+def makeItConnected(graph):
+    for node in range(graph.vertices):
+        nodeConnected = isGraphConnected(graph, node)
+        if nodeConnected == True:
+            print("Node is connected to the rest of the graph")
+        else:
+            graph.addSingleEdge(node, random.choice(range(graph.vertices)))
+            makeItConnected(graph)
+
 
 layout = [
+        [sg.Button("EXIT")],
         [sg.Text("Enter the number of nodes:")],    
         [sg.Input(key='-nodes-')],
         [sg.Text("Enter the probability (%) to generate the edges:")],    
@@ -103,6 +108,7 @@ layout = [
         [sg.Text("Enter the size for vertex cover (should be less tha the number of vertices):")],    
         [sg.Input(key='-vertexcover-')],
         [sg.Button("Brute Vertex Cover")],
+        [sg.Text("", key='-vertexCoverLabel-')],
     ]
 
 window = sg.Window("Algorithms Assignmet 1", layout)
@@ -111,23 +117,28 @@ numberOfNodes: int
 probability: int
 g: Graph
 
-#TODO fix closing window PySimpleGUI
+#TODO fix closing window
 while True:
     event, values = window.read(timeout=10)
-    if event == sg.WIN_CLOSED:
+    if event == "EXIT":
         break
     elif event == "Generate Graph":
         numberOfNodes = int(values['-nodes-'])
         probability = int(values['-probability-'])
         g = Graph(numberOfNodes)
         g.addEdges(probability)
+        g.printAdjMatrix()
         #g.drawGraph()
     elif event == "Make it a connected graph":
-        #TODO
-        print(isGraphConnected(g))
+        #plt.close()
+        print(isGraphConnected(g, 0))
+        makeItConnected(g)
+        g.printAdjMatrix()
         #g.drawGraph()
     elif event == "Brute Vertex Cover":
         #TODO
-        g.printVertexCover()
-        #g.drawGraph()
+        numOfVertexCover = int(values['-vertexcover-'])
+        text = printVertexCover(g, numOfVertexCover)
+        window['-vertexCoverLabel-'].Update(text)
+        g.drawGraph()
 window.close()
