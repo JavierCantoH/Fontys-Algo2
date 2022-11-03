@@ -1,3 +1,4 @@
+from tkinter.tix import InputOnly
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -27,15 +28,15 @@ class Graph(object):
                     randomNode = random.choice(range(self.vertices))
                     self.addSingleEdge(node, randomNode)
     
-    def drawGraph(self):
-        A = np.array(self.adjMatrix)
+
+def printAdjMatrix(graph):
+        A = np.array(graph.adjMatrix)
+        print(np.matrix(A))
+
+def drawGraph(graph):
+        A = np.array(graph.adjMatrix)
         G = nx.from_numpy_matrix(A)
         nx.draw(G, node_color='lightblue')
-        plt.show(block = False)
-    
-    def printAdjMatrix(self):
-        A = np.array(self.adjMatrix)
-        print(np.matrix(A))
     
 def isNodeVertexCoverTrue(graph, start, num):
         count = 0
@@ -52,7 +53,7 @@ def isNodeVertexCoverTrue(graph, start, num):
         else:
             return False
 
-def printVertexCover(graph, num):
+def bruteVertexCover(graph, num):
     for node in range(graph.vertices):
         currentNode = isNodeVertexCoverTrue(graph, node, num)
         if currentNode == True:
@@ -67,11 +68,8 @@ def getProbability(probability):
         return random.random() < p
 
 def DFS(graph, start, visited):
-    # Set current node as visited
     visited[start] = True
-    # For every node of the graph
     for node in range(graph.vertices):
-        # If some node is adjacent to the current node and it has not already been visited
         if (graph.adjMatrix[start][node] == 1 and (not visited[node])):
             DFS(graph, node, visited)
 
@@ -104,7 +102,6 @@ layout = [
         [sg.Text("Enter the probability (%) to generate the edges:")],    
         [sg.Input(key='-probability-')],
         [sg.Button("Generate Graph")],
-        [sg.Button("Make it a connected graph")],
         [sg.Text("Enter the size for vertex cover (should be less tha the number of vertices):")],    
         [sg.Input(key='-vertexcover-')],
         [sg.Button("Brute Vertex Cover")],
@@ -117,28 +114,52 @@ numberOfNodes: int
 probability: int
 g: Graph
 
-#TODO fix closing window
+# TODO: button to restart textfields insted of closing and reopening every single time
+# TODO: add comments to the code
+
+# TODO: fix connected graph
+# TODO: complelty change brute vertex cover
+# TODO: week 3
+
 while True:
     event, values = window.read(timeout=10)
     if event == "EXIT":
         break
     elif event == "Generate Graph":
-        numberOfNodes = int(values['-nodes-'])
-        probability = int(values['-probability-'])
-        g = Graph(numberOfNodes)
-        g.addEdges(probability)
-        g.printAdjMatrix()
-        #g.drawGraph()
-    elif event == "Make it a connected graph":
-        #plt.close()
-        print(isGraphConnected(g, 0))
-        makeItConnected(g)
-        g.printAdjMatrix()
-        #g.drawGraph()
+        input1 = values['-nodes-']
+        input2 = values['-probability-']
+        if input1 and input2 == '':
+            print('Null string')
+        else:
+            try:
+                numberOfNodes = int(input1)
+                probability = int(input2)
+                print(f'Integer: {numberOfNodes}')
+                print(f'Integer: {probability}')
+                g = Graph(numberOfNodes)
+                g.addEdges(probability)
+                printAdjMatrix(g)
+                plt.figure(1)
+                drawGraph(g)
+                makeItConnected(g)
+                printAdjMatrix(g)
+                plt.figure(2)
+                drawGraph(g)
+                plt.show(block = False)
+            except:
+                print("Not Integer")
+
     elif event == "Brute Vertex Cover":
-        #TODO
-        numOfVertexCover = int(values['-vertexcover-'])
-        text = printVertexCover(g, numOfVertexCover)
-        window['-vertexCoverLabel-'].Update(text)
-        g.drawGraph()
-window.close()
+        input3 = values['-vertexcover-']
+        if input3 == '':
+            print('Null string')
+        else:
+            try:
+                numOfVertexCover = int(input3)
+                print(f'Integer: {numOfVertexCover}')
+                printAdjMatrix(g)
+                text = bruteVertexCover(g, numOfVertexCover)
+                window['-vertexCoverLabel-'].Update(text)
+            except:
+                print("Not Integer")
+#window.close()
