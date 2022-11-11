@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import random
+import itertools
 
 class Graph(object):
     def __init__(self, vertices):
@@ -40,7 +41,7 @@ def drawGraph(graph):
         G = nx.from_numpy_matrix(A)
         nx.draw(G, node_color='lightblue', with_labels = 1)
 
-def bruteVertexCover(g):
+def greedyVertexCover(g):
     cover = []
     isValid, numOfEdgesInNode = validate(g, cover)
     
@@ -63,7 +64,16 @@ def bruteVertexCover(g):
     # in the second iteration our vertex cover will be valid
     return cover
 
-def validate(g, cover):
+def bruteVertexCover(graph):
+    for node in range(1, graph.vertices + 1):
+        print('Checking subsets of size', str(node))
+        # iterate over k sized subsets and check if each of those subsets is a vertex cover
+        for subset in itertools.combinations(range(graph.vertices), node):
+            if validate(graph.adjMatrix, set(subset)):
+                return (set(subset))
+    return None
+
+def validate(g, S): 
     isValid = True
     # we create a list of [[0, 0, ...]] (only 1 list inside the list size of the graph adjmatrix)
     numOfEdgesInNode = [0] * len(g)
@@ -73,11 +83,12 @@ def validate(g, cover):
     for i in range(0, len(g)):
         for j in range(i, len(g)): # we start on i because we will be counting the edges twice otherwise
             if g[i][j] == 1: # check if there is an edge between 2 nodes in position [i][j]
-                if (i not in cover) and (j not in cover): # in the second iteration, node 0 will be in cover, so we skip the next lines
+                if (i not in S) and (j not in S): # in the second iteration, node 0 will be in cover, so we skip the next lines
                     isValid = False
                     numOfEdgesInNode[i] += 1  # (iteration 1) from 0 we can go to 1
                     numOfEdgesInNode[j] += 1  # (iteration 1) from 1 we can go to 0
-    return isValid, numOfEdgesInNode
+    return isValid
+    #return isValid, numOfEdgesInNode (for greedy vertex cover)
 
 def getProbability(probability):
         p = float(probability / 100)
@@ -129,7 +140,7 @@ numberOfNodes: int
 probability: int
 g: Graph
 
-# TODO: week 3
+# TODO: week 3 and 4
 
 while True:
     event, values = window.read(timeout=10)
@@ -170,7 +181,8 @@ while True:
                 printAdjMatrix(g)
                 visited = [False] * (g.vertices)
                 text = ""
-                if len(bruteVertexCover(g.adjMatrix)) <= numOfVertexCover:
+                possibleSolutions = bruteVertexCover(g)
+                if len(possibleSolutions) <= numOfVertexCover:
                     text = "Graph has vertex cover of size: " + str(numOfVertexCover)
                 else:
                     text = "Graph doesn't have vertex cover of size: " + str(numOfVertexCover)
