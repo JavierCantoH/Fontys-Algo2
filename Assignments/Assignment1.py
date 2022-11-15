@@ -1,5 +1,5 @@
 
-# TODO UI stuff: add comments to the code and button to restart textfields insted of closing and reopening every single time
+# TODO UI stuff: add comments to the code
 
 from tkinter.tix import InputOnly
 import PySimpleGUI as sg
@@ -8,6 +8,8 @@ import networkx as nx
 import numpy as np
 import random
 import itertools
+from time import sleep
+from progress.spinner import MoonSpinner
 
 class Graph(object):
     def __init__(self, vertices):
@@ -65,12 +67,20 @@ def greedyVertexCover(g):
     return cover
 
 def bruteVertexCover(graph):
-    for node in range(1, graph.vertices + 1):
-        print('Checking subsets of size', str(node))
-        # iterate over k sized subsets and check if each of those subsets is a vertex cover
-        for subset in itertools.combinations(range(graph.vertices), node):
-            if validate(graph.adjMatrix, set(subset)):
-                return (set(subset))
+    state = "starting"
+    spinner = MoonSpinner('Loading ')
+
+    while state != 'FINISHED':
+        for node in range(1, graph.vertices + 1):
+            #print('Checking subsets of size', str(node))
+            # iterate over k sized subsets and check if each of those subsets is a vertex cover
+            # the subsets are all posible combinations of k size
+            for subset in itertools.combinations(range(graph.vertices), node):
+                spinner.next()
+                if validate(graph.adjMatrix, set(subset)):
+                    state = 'FINISHED'
+                    return (set(subset))
+    state = 'FINISHED'
     return None
 
 def validate(g, S): 
@@ -78,7 +88,7 @@ def validate(g, S):
     # we create a list of [[0, 0, ...]] (only 1 list inside the list size of the graph adjmatrix)
     numOfEdgesInNode = [0] * len(g)
     A = np.array(numOfEdgesInNode)
-    print(np.matrix(A))
+    #print(np.matrix(A))
     # iterate through the adjMatrix
     for i in range(0, len(g)):
         for j in range(i, len(g)): # we start on i because we will be counting the edges twice otherwise
@@ -140,6 +150,7 @@ numberOfNodes: int
 probability: int
 g: Graph
 
+# TODO: progress bar for vertex cover
 # TODO: week 3 and 4
 
 while True:
@@ -150,13 +161,12 @@ while True:
         input1 = values['-nodes-']
         input2 = values['-probability-']
         if input1 and input2 == '':
-            print('Null string')
+            text = "Null string"
+            window['-vertexCoverLabel-'].Update(text)
         else:
             try:
                 numberOfNodes = int(input1)
                 probability = int(input2)
-                print(f'Integer: {numberOfNodes}')
-                print(f'Integer: {probability}')
                 g = Graph(numberOfNodes)
                 g.addEdges(probability)
                 printAdjMatrix(g)
@@ -168,19 +178,22 @@ while True:
                 drawGraph(g)
                 plt.show(block = False)
             except:
-                print("Not Integer")
+                text = "No integer"
+                window['-vertexCoverLabel-'].Update(text)
 
     elif event == "Brute Vertex Cover":
         input3 = values['-vertexcover-']
         if input3 == '':
-            print('Null string')
+            text = "Null string"
+            window['-vertexCoverLabel-'].Update(text)
+        elif int(input3) >= numberOfNodes:
+            text = "The input is bigger than the total number of nodes"
+            window['-vertexCoverLabel-'].Update(text)
         else:
             try:
                 numOfVertexCover = int(input3)
-                print(f'Integer: {numOfVertexCover}')
-                printAdjMatrix(g)
+                #printAdjMatrix(g)
                 visited = [False] * (g.vertices)
-                text = ""
                 possibleSolutions = bruteVertexCover(g)
                 if len(possibleSolutions) <= numOfVertexCover:
                     text = "Graph has vertex cover of size: " + str(numOfVertexCover)
@@ -188,4 +201,5 @@ while True:
                     text = "Graph doesn't have vertex cover of size: " + str(numOfVertexCover)
                 window['-vertexCoverLabel-'].Update(text)
             except:
-                print("Not Integer")
+                text = "No integer"
+                window['-vertexCoverLabel-'].Update(text)
