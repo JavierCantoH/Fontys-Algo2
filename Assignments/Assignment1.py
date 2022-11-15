@@ -1,5 +1,5 @@
 
-# TODO UI stuff: add comments to the code
+# TODO UI stuff: move progress bar to ui
 
 from tkinter.tix import InputOnly
 import PySimpleGUI as sg
@@ -83,6 +83,86 @@ def bruteVertexCover(graph):
     state = 'FINISHED'
     return None
 
+def kernBruteVertexCover(graph, k, vertex_cover):
+    state = "starting"
+    spinner = MoonSpinner('Loading ')
+
+    while state != 'FINISHED':
+        if graph.vertices == 0:
+            return vertex_cover
+
+        if k == 0:
+            return None
+        
+        for node in range(1, graph.vertices + 1):
+            #print('Checking subsets of size', str(node))
+            # iterate over k sized subsets and check if each of those subsets is a vertex cover
+            # the subsets are all posible combinations of k size
+            for vertex_cover in itertools.combinations(range(graph.vertices), node):
+                spinner.next()
+                if validate(graph.adjMatrix, set(vertex_cover)):
+                    state = 'FINISHED'
+                    return (set(subset))
+    state = 'FINISHED'
+    return None
+
+def vertex_cover_kernelization(graph, k):
+    """
+    Finds a vertex cover of size k using kernelization
+    Returning a set of at most k vertices that includes the endpoint of every
+    edge in the graph or None if no such set exists
+    Parameters
+    ----------
+        graph : Graph
+            The graph to find a vertex cover of
+        k : int
+            Size k
+    Returns
+    -------
+        Optional[set]
+            Vertex cover if one exists else None
+    """
+    kernel, vertex_cover = _kernelize(graph, k)
+
+    if kernel.number_of_nodes() > k ** 2 + k or kernel.vertices > k ** 2:
+        return None
+
+    return kernBruteVertexCover(kernel, k - len(vertex_cover), vertex_cover)
+
+def _kernelize(graph, k):
+    """
+    Kernelizes a graph given size k
+    Parameters
+    ----------
+        graph : Graph
+            Graph to kernelize
+        k : int
+            Size k
+    Returns
+    -------
+        Tuple[Graph, set]
+            Pair of the kernel and vertex cover
+    """
+    kernel = graph.adjMatrix
+    vertex_cover = set()
+    reductions_can_be_made = True
+    while reductions_can_be_made:
+        reduction_made = False
+        for node in list(kernel.vertices):
+            degree = kernel.degree[node]
+            if k > 0 and degree > k:
+                reduction_made = True
+                kernel.remove_node(node)
+                vertex_cover.add(node)
+                k -= 1
+            elif degree == 0:
+                kernel.remove_node(node)
+
+        if not reduction_made:
+            reductions_can_be_made = False
+
+    return kernel, vertex_cover
+
 def validate(g, S): 
     isValid = True
     # we create a list of [[0, 0, ...]] (only 1 list inside the list size of the graph adjmatrix)
@@ -141,6 +221,7 @@ layout = [
         [sg.Text("Enter the size for vertex cover (should be less tha the number of vertices):")],    
         [sg.Input(key='-vertexcover-')],
         [sg.Button("Brute Vertex Cover")],
+        [sg.Button("Kernelization Vertex Cover")],
         [sg.Text("", key='-vertexCoverLabel-')],
     ]
 
@@ -150,7 +231,7 @@ numberOfNodes: int
 probability: int
 g: Graph
 
-# TODO: progress bar for vertex cover
+# TODO: add comments to the code
 # TODO: week 3 and 4
 
 while True:
@@ -193,8 +274,29 @@ while True:
             try:
                 numOfVertexCover = int(input3)
                 #printAdjMatrix(g)
-                visited = [False] * (g.vertices)
                 possibleSolutions = bruteVertexCover(g)
+                if len(possibleSolutions) <= numOfVertexCover:
+                    text = "Graph has vertex cover of size: " + str(numOfVertexCover)
+                else:
+                    text = "Graph doesn't have vertex cover of size: " + str(numOfVertexCover)
+                window['-vertexCoverLabel-'].Update(text)
+            except:
+                text = "No integer"
+                window['-vertexCoverLabel-'].Update(text)
+                
+    elif event == "Kernelization Vertex Cover":
+        input3 = values['-vertexcover-']
+        if input3 == '':
+            text = "Null string"
+            window['-vertexCoverLabel-'].Update(text)
+        elif int(input3) >= numberOfNodes:
+            text = "The input is bigger than the total number of nodes"
+            window['-vertexCoverLabel-'].Update(text)
+        else:
+            try:
+                numOfVertexCover = int(input3)
+                #printAdjMatrix(g)
+                possibleSolutions = vertex_cover_kernelization(g, int(input3))
                 if len(possibleSolutions) <= numOfVertexCover:
                     text = "Graph has vertex cover of size: " + str(numOfVertexCover)
                 else:
