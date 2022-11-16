@@ -1,6 +1,3 @@
-
-# TODO UI stuff: move progress bar to ui
-
 from tkinter.tix import InputOnly
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
@@ -34,6 +31,40 @@ class Graph(object):
                     randomNode = random.choice(range(self.vertices))
                     self.addSingleEdge(node, randomNode)
 
+    def removeEdge(self, v1, v2):
+        global degree
+        if self.adjMatrix[v1][v2] == 0:
+            print("No edge between %d and %d" % (v1, v2))
+            return
+        elif v1 == v2:
+            print("Same vertex %d and %d" % (v1, v2))
+            return
+        self.adjMatrix[v1][v2] = 0
+        self.adjMatrix[v2][v1] = 0
+        degree = degree - 1
+    
+    def pendantVertices(self):
+        pendantVertices = []
+        edgesInNodesList = []
+        valid, edgesInNodesList = getEdgesPerNodeAndValidate(g.adjMatrix, edgesInNodesList)
+        for index, edge in enumerate(edgesInNodesList):
+            if edge == 1:
+                pendantVertices.append(index)
+        return pendantVertices
+                
+    # TODO: fix this function
+    def removeVertex(self, x):
+        global numberOfNodes
+        printAdjMatrix(self)
+        for index, node in enumerate(range(self.vertices)):
+            if x == node:
+                numberOfNodes = numberOfNodes - 1
+                #self.vertices.remove(x)
+                self.adjMatrix.pop(index)
+                for i in self.adjMatrix:
+                    i.pop(index1)
+                printAdjMatrix(self)
+
 def printAdjMatrix(graph):
         A = np.array(graph.adjMatrix)
         print(np.matrix(A))
@@ -43,47 +74,7 @@ def drawGraph(graph):
         G = nx.from_numpy_matrix(A)
         nx.draw(G, node_color='lightblue', with_labels = 1)
 
-def greedyVertexCover(g):
-    cover = []
-    isValid, numOfEdgesInNode = validate(g, cover)
-    
-    while not isValid:
-        #  nodeInVC = [x][0] the [0] because numOfEdgesInNode is a list of lists but with only 1 "[[0 0 0 0]]"
-
-        #  example: (to reproduce use: 4 nodes, 50%)
-        #       1
-        #       |
-        #       0
-        #     /   \
-        #   2       3
-        #  in this graph the numOfEdgesInNode = [3, 1, 1, 1] (in the first iteration)
-        #  iterate from position 0...3 and we mark the node as cover if it has the max number of edges
-        nodeInVC = [x for x in range(0, len(numOfEdgesInNode)) if numOfEdgesInNode[x] == max(numOfEdgesInNode)][0]
-         #  in this case node 0, so we marked as covered
-        cover.append(nodeInVC)
-        # we validate the vertex cover
-        isValid, numOfEdgesInNode = validate(g, cover) 
-    # in the second iteration our vertex cover will be valid
-    return cover
-
-def bruteVertexCover(graph):
-    state = "starting"
-    spinner = MoonSpinner('Loading ')
-
-    while state != 'FINISHED':
-        for node in range(1, graph.vertices + 1):
-            #print('Checking subsets of size', str(node))
-            # iterate over k sized subsets and check if each of those subsets is a vertex cover
-            # the subsets are all posible combinations of k size
-            for subset in itertools.combinations(range(graph.vertices), node):
-                spinner.next()
-                if validate(graph.adjMatrix, set(subset)):
-                    state = 'FINISHED'
-                    return (set(subset))
-    state = 'FINISHED'
-    return None
-
-def kernBruteVertexCover(graph, k, vertex_cover):
+def bruteVertexCover(graph, k, vertex_cover):
     state = "starting"
     spinner = MoonSpinner('Loading ')
 
@@ -95,90 +86,69 @@ def kernBruteVertexCover(graph, k, vertex_cover):
             return None
         
         for node in range(1, graph.vertices + 1):
-            #print('Checking subsets of size', str(node))
-            # iterate over k sized subsets and check if each of those subsets is a vertex cover
-            # the subsets are all posible combinations of k size
+            # print('Checking subsets of size', str(node))
+            # iterate over k sized subsets and check if each of those subsets is a vertex cover, the subsets are all posible combinations of k size
             for vertex_cover in itertools.combinations(range(graph.vertices), node):
                 spinner.next()
-                if validate(graph.adjMatrix, set(vertex_cover)):
+                valid, numOfEdgesPerNode = getEdgesPerNodeAndValidate(graph.adjMatrix, set(vertex_cover))
+                if valid:
                     state = 'FINISHED'
-                    return (set(subset))
+                    return (set(vertex_cover))
     state = 'FINISHED'
     return None
 
 def vertex_cover_kernelization(graph, k):
-    """
-    Finds a vertex cover of size k using kernelization
-    Returning a set of at most k vertices that includes the endpoint of every
-    edge in the graph or None if no such set exists
-    Parameters
-    ----------
-        graph : Graph
-            The graph to find a vertex cover of
-        k : int
-            Size k
-    Returns
-    -------
-        Optional[set]
-            Vertex cover if one exists else None
-    """
     kernel, vertex_cover = _kernelize(graph, k)
 
-    if kernel.number_of_nodes() > k ** 2 + k or kernel.vertices > k ** 2:
+    if kernel.vertices > k ** 2 + k or kernel.vertices > k ** 2:
         return None
+    return bruteVertexCover(kernel, k - len(vertex_cover), vertex_cover)
 
-    return kernBruteVertexCover(kernel, k - len(vertex_cover), vertex_cover)
-
+# TODO: finish this function
 def _kernelize(graph, k):
-    """
-    Kernelizes a graph given size k
-    Parameters
-    ----------
-        graph : Graph
-            Graph to kernelize
-        k : int
-            Size k
-    Returns
-    -------
-        Tuple[Graph, set]
-            Pair of the kernel and vertex cover
-    """
-    kernel = graph.adjMatrix
+    kernel = graph
     vertex_cover = set()
     reductions_can_be_made = True
+    
+    A = np.array(graph.adjMatrix)
+    G = nx.from_numpy_matrix(A)
+    
     while reductions_can_be_made:
         reduction_made = False
-        for node in list(kernel.vertices):
-            degree = kernel.degree[node]
+        for node in range(kernel.vertices):
+            degree = G.degree[node]
             if k > 0 and degree > k:
                 reduction_made = True
-                kernel.remove_node(node)
+                kernel.removeVertex(node)
                 vertex_cover.add(node)
                 k -= 1
             elif degree == 0:
-                kernel.remove_node(node)
+                kernel.removeVertex(node)
 
         if not reduction_made:
             reductions_can_be_made = False
 
     return kernel, vertex_cover
 
-def validate(g, S): 
+# TODO: week 4 
+# def enhancedBruteForce:
+
+# TODO: week 5 
+# recursive kernelization or smart search tree
+
+def getEdgesPerNodeAndValidate(g, S): 
     isValid = True
     # we create a list of [[0, 0, ...]] (only 1 list inside the list size of the graph adjmatrix)
     numOfEdgesInNode = [0] * len(g)
-    A = np.array(numOfEdgesInNode)
-    #print(np.matrix(A))
     # iterate through the adjMatrix
     for i in range(0, len(g)):
         for j in range(i, len(g)): # we start on i because we will be counting the edges twice otherwise
             if g[i][j] == 1: # check if there is an edge between 2 nodes in position [i][j]
-                if (i not in S) and (j not in S): # in the second iteration, node 0 will be in cover, so we skip the next lines
+                if (i not in S) and (j not in S): 
                     isValid = False
-                    numOfEdgesInNode[i] += 1  # (iteration 1) from 0 we can go to 1
-                    numOfEdgesInNode[j] += 1  # (iteration 1) from 1 we can go to 0
-    return isValid
-    #return isValid, numOfEdgesInNode (for greedy vertex cover)
+                    numOfEdgesInNode[i] += 1  # example: from 0 we can go to 1
+                    numOfEdgesInNode[j] += 1  # example: from 1 we can go to 0
+    return isValid, numOfEdgesInNode
 
 def getProbability(probability):
         p = float(probability / 100)
@@ -223,6 +193,8 @@ layout = [
         [sg.Button("Brute Vertex Cover")],
         [sg.Button("Kernelization Vertex Cover")],
         [sg.Text("", key='-vertexCoverLabel-')],
+        [sg.Button("+ Pendants"), sg.Button("- Pendants")],
+        [sg.Button("+ Tops"), sg.Button("- Tops")],
     ]
 
 window = sg.Window("Algorithms Assignmet 1", layout)
@@ -232,7 +204,7 @@ probability: int
 g: Graph
 
 # TODO: add comments to the code
-# TODO: week 3 and 4
+# TODO UI stuff: move progress bar to ui
 
 while True:
     event, values = window.read(timeout=10)
@@ -273,8 +245,9 @@ while True:
         else:
             try:
                 numOfVertexCover = int(input3)
+                initial_vertex_cover = []
                 #printAdjMatrix(g)
-                possibleSolutions = bruteVertexCover(g)
+                possibleSolutions = bruteVertexCover(g, numOfVertexCover, initial_vertex_cover)
                 if len(possibleSolutions) <= numOfVertexCover:
                     text = "Graph has vertex cover of size: " + str(numOfVertexCover)
                 else:
@@ -294,6 +267,7 @@ while True:
             window['-vertexCoverLabel-'].Update(text)
         else:
             try:
+                # TODO: finding isolated vertices, finding pendant vertices (and their adjacent vertices), finding tops verticeThose should be indicated in the graph picture with proper coloring of the vertices and/or edges.
                 numOfVertexCover = int(input3)
                 #printAdjMatrix(g)
                 possibleSolutions = vertex_cover_kernelization(g, int(input3))
@@ -305,3 +279,41 @@ while True:
             except:
                 text = "No integer"
                 window['-vertexCoverLabel-'].Update(text)
+    elif event == "- Pendants":
+        # selects an arbitrary non-pendant vertex and makes it a pendant by removing arbitrary edges
+        A = np.array(g.adjMatrix)
+        G = nx.from_numpy_matrix(A)
+        printAdjMatrix(g)
+        pendantVerticesList = g.pendantVertices()
+    
+        randomNodeToDeleteEdges = random.choice(range(g.vertices))
+        
+        while randomNodeToDeleteEdges in pendantVerticesList:
+            randomNodeToDeleteEdges = random.choice(range(g.vertices))
+            
+        global degree 
+        degree = G.degree[randomNodeToDeleteEdges]
+            
+        while degree != 1 and degree > 0:
+                    randomNode = random.choice(range(g.vertices))
+                    g.removeEdge(randomNodeToDeleteEdges, randomNode)
+        # TODO: draw the new graph
+        printAdjMatrix(g)
+    elif event == "+ Pendants":
+        # selects an arbitrary pendant vertex and makes it non pendant by adding arbitrary edge
+        printAdjMatrix(g)
+        pendantVerticesList = g.pendantVertices()
+        randomNode = random.choice(range(g.vertices))
+        randomNodeToAddEdge = random.choice(pendantVerticesList)
+        while randomNodeToAddEdge == randomNode:
+           randomNodeToAddEdge = random.choice(pendantVerticesList) 
+        g.addSingleEdge(randomNodeToAddEdge, randomNode)
+        # TODO: draw the new graph
+        printAdjMatrix(g)
+    elif event == "- Tops":
+        # TODO ask teacher what does should it do
+        print()
+    elif event == "+ Tops":
+        # TODO ask teacher what does should it do
+        print()
+        
